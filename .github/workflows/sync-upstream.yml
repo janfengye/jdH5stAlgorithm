@@ -1,0 +1,27 @@
+name: Sync upstream (keep upstream deletions local)
+
+on:
+  schedule:
+    - cron: '17 */6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Sync with upstream
+        run: |
+          set -e
+          git fetch upstream 2>/dev/null || { echo No upstream, skip; exit 0; }
+          git checkout main
+          git merge --no-edit upstream/main || { echo Merge conflict; git merge --abort; exit 0; }
+          git push origin main
